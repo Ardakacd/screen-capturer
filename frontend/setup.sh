@@ -6,10 +6,12 @@ echo "🚀 Setting up Agent B Frontend..."
 echo "📦 Installing Node dependencies..."
 npm install
 
-# Copy .env.local.example if it doesn't exist
+# Create .env.local file if it doesn't exist
 if [ ! -f .env.local ]; then
     echo "⚙️  Creating .env.local file..."
-    cp .env.local.example .env.local
+    cat > .env.local << EOF
+NEXT_PUBLIC_API_URL=http://localhost:8000
+EOF
 fi
 
 echo "✅ Frontend setup complete!"

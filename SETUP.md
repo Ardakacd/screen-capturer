@@ -175,22 +175,10 @@ The backend requires an `.env` file in the `backend/` directory.
 
 - `OPENAI_API_KEY` - Your OpenAI API key
 
-**Optional:**
-
-- `HOST` - Server host (default: `0.0.0.0`)
-- `PORT` - Server port (default: `8000`)
-- `ENVIRONMENT` - Environment mode (default: `development`)
-
 **Example `.env` file:**
 
 ```env
-# Required
 OPENAI_API_KEY=sk-proj-abc123xyz789...
-
-# Optional
-HOST=0.0.0.0
-PORT=8000
-ENVIRONMENT=development
 ```
 
 For detailed information about environment variables, see [backend/ENV.md](backend/ENV.md).

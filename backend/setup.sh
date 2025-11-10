@@ -23,10 +23,12 @@ playwright install chromium
 echo "📁 Creating directories..."
 mkdir -p screenshots
 
-# Copy .env.example to .env if it doesn't exist
+# Create .env file if it doesn't exist
 if [ ! -f .env ]; then
     echo "⚙️  Creating .env file..."
-    cp .env.example .env
+    cat > .env << EOF
+OPENAI_API_KEY=sk-your-api-key-here
+EOF
     echo "⚠️  Please edit .env and add your OPENAI_API_KEY"
 fi
 
