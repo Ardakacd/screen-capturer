@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { WorkflowDisplay } from "@/types";
 
 interface WorkflowViewerProps {
@@ -127,10 +128,13 @@ export default function WorkflowViewer({ workflow }: WorkflowViewerProps) {
                       </p>
                     )}
                     <div className="relative rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-600 shadow-md hover:shadow-xl transition-shadow">
-                      <img
+                      <Image
                         src={`${API_URL}/${screenshotPath}`}
                         alt={`Step ${index + 1}`}
+                        width={1920}
+                        height={1080}
                         className="w-full h-auto"
+                        unoptimized
                       />
                     </div>
                   </div>
