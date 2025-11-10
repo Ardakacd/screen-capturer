@@ -3,7 +3,6 @@ from typing import Optional, List
 
 
 class StartTaskRequest(BaseModel):
-    site_url: str = Field(..., description="The main URL to navigate after login.")
     login_url: Optional[str] = Field(None, description="The login URL to navigate to.")
     session_path: str = Field(..., description="The path to store the session.")
     task: str = Field(..., description="The task to complete.")
