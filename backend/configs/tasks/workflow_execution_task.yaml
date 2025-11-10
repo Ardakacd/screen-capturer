@@ -1,0 +1,74 @@
+workflow_execution_task:
+  description: >
+    Task: {task_description}
+
+    Complete the user's UI-based task (e.g., "how to invite a teammate in Notion", "how to create a project in Linear")
+    by reasoning about the current UI state and interacting with visible elements using Playwright tools,
+    while capturing screenshots that visually document each meaningful step.
+
+     ---
+    Tool Usage Guidelines:
+      - Start with capture_ui_snapshot_tool() to understand visible UI elements.
+      - Use click_element_and_take_screenshot_tool("<selector>", <bbox_x>, <bbox_y>, <bbox_width>, <bbox_height>)
+        for buttons or clickable divs. Do not make up any selectors just use the ones in the snapshot.
+      - Use fill_input_and_take_screenshot_tool("<selector>", <bbox_x>, <bbox_y>, <bbox_width>, <bbox_height>, "<text>")
+        for inputs and text fields. Do not make up any selectors just use the ones in the snapshot.
+      - Use navigate_page_and_take_screenshot_tool("<url>") only when explicitly needed for navigation.
+      - Use capture_ui_snapshot_tool() after each meaningful UI change to verify success.
+      - Always reason based on the latest snapshot — never guess.
+
+    ---
+    Reasoning Style:       
+      You operate in a closed perception–action loop:
+        1. Observe using capture_ui_snapshot_tool.
+        2. Take action via click_element_and_take_screenshot_tool or fill_input_and_take_screenshot_tool or navigate_page_and_take_screenshot_tool.
+        3. Verify the change via capture_ui_snapshot_tool.
+        4. Continue until the task is clearly achieved (e.g., modal confirmation, new item visible).
+        5. Before finishing always call the capture_ui_snapshot_tool and check if the task is achieved by comparing the snapshot with the previous snapshot.
+        6. If the task is achieved return the screenshot paths and the explanation.
+      
+    ---
+    Example:
+      Task: "Invite teammate in Notion"
+      Thought: Begin by observing the workspace.
+      Action: capture_ui_snapshot_tool()
+      Observation: Found 'Share' button.
+      Thought: Click 'Share' to open invite modal.
+      Action: click_element_and_take_screenshot_tool("[aria-label='Share'], div[role='button']:has-text('Share')", 100, 300, 120, 40)
+      Observation: Clicked element and screenshot saved to path <path1>.
+      Action: capture_ui_snapshot_tool()
+      Observation: Found 'Add emails' input field.
+      Thought: Fill teammate email.
+      Action: fill_input_and_take_screenshot_tool("input[placeholder='Add emails']", 200, 400, 150, 50, "arda@example.com")
+      Observation: Input filled and screenshot saved to path <path2>.
+      Action: capture_ui_snapshot_tool()
+      Observation: Found 'Send email' button.
+      Thought: Click to send invite.
+      Action: click_element_and_take_screenshot_tool("div[role='button']:has-text('Send email')", 210, 500, 150, 50)
+      Observation: Clicked element and screenshot saved to path <path3>.
+      Thought: I need to check if the task is achieved by comparing the snapshot with the previous snapshot.
+      Action: capture_ui_snapshot_tool()
+      Observation: I saw the succcessfully invited teammate.
+      Thought: Task is achieved.
+      Action: return the screenshot paths and the explanation.
+
+      Final Output:
+      {{
+        "paths": [
+          <path1>,
+          <path2>,
+          <path3>
+        ],
+        "explanation": "1)  Clicked 'Share' to open invite modal. 2) Entered teammate's email. 3) Clicked 'Send email' to send the invite. Each screenshot shows the UI transition for these steps."
+      }}
+
+  expected_output: >
+    At the end of your reasoning, always output a JSON object with this structure:
+    {{
+      "paths": [<screenshot paths of the effective steps>],
+      "explanation": "<explanation of the steps in the order of the steps>"
+    }}
+
+    - Include only the meaningful, effective screenshots.
+    - Do not include screenshots from failed or redundant clicks.
+    - The explanation should read like a concise human tutorial.

@@ -1,0 +1,42 @@
+url_finding_task:
+  description: >
+    Task: {task_description}
+
+    Your job is to identify the base URL (domain only, no path) of the web application where the workflow should begin. 
+    You can use web search to find the application, then navigate to verify it's the correct site.
+    Return ONLY the base URL without any path (e.g., "https://example.com" NOT "https://example.com/path").
+
+     ---
+    Tool Usage Guidelines:
+      - Use search_internet_tool("<task_description>") to find the base URL of the application (domain only).
+      - Use navigate_page_and_take_screenshot_tool("<base_url>") to visit and verify it's the correct application.
+      - Use capture_ui_snapshot_tool() to confirm the page is the correct application.
+      - Return ONLY the base domain URL, no paths or query parameters.
+
+    ---
+    Reasoning Style:       
+      - Begin by searching the web with search_internet_tool(<task_description>) to find potential entry URLs.
+      - Navigate to the most relevant candidate using navigate_page_and_take_screenshot_tool().
+      - Capture the UI with capture_ui_snapshot_tool() to verify that the visible interface
+        aligns with the user’s intent (e.g., workspace, project list, dashboard, etc.).
+      - Stop once you have found a page that visually confirms the correct starting point.
+      - If the page does not match expectations, try another URL from the search results.
+      
+    ---
+    Example:
+      Task: "Invite a teammate in <website_name>"
+      Thought: I should find the <website_name> workspace URL where sharing actions are available.
+      Action: search_internet_tool("Invite a teammate in <website_name>")
+      Observation: Top result shows https://<website_name>.com.
+      Thought: The url should be https://<website_name>.com.
+      Action: navigate_page_and_take_screenshot_tool("https://<website_name>.com")
+      Observation: The workspace dashboard with a "Share" button is visible.
+      Thought: This is the correct starting point for inviting teammates.
+      Final Output: Navigated to https://<website_name>.com.
+
+  expected_output: >
+    Return a short string confirming the navigation to the verified base URL (domain only, no path).  
+    Example 1:
+      Final Output: Navigated to https://example.com.
+
+    IMPORTANT: Return ONLY the base domain URL without any path.
