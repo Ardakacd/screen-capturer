@@ -1,57 +1,61 @@
 import os
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Browser, BrowserContext, Page
+
+# Global playwright instance that stays alive
+_playwright = None
 
 async def ensure_session(
-    site_url: str,
     login_url: str = None,
     session_path: str = "session.json",
-):
+) -> tuple[Browser, BrowserContext, Page]:
     """
     Generic Playwright session manager.
     - Reuses existing login session if available.
     - Otherwise opens the login page, waits for manual login, and saves session.
 
     Args:
-        site_url (str): The main URL to navigate after login.
-        login_url (str): Optional explicit login page URL (if different from site_url).
+        login_url (str): Optional explicit login page URL.
         session_path (str): Where to store session cookies/localStorage.
 
     Returns:
-        (browser, context, page): A tuple of Playwright handles ready for use.
+        (browser, page): A tuple of Playwright handles ready for use.
     """
+    global _playwright
+    
+    # Start playwright if not already started
+    if _playwright is None:
+        _playwright = await async_playwright().start()
+    
+    browser = await _playwright.chromium.launch(headless=False, channel="chrome")
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False, channel="chrome")
-
-        # If we already have a session, reuse it
-        if os.path.exists(session_path):
-            print(f"🔁 Reusing existing session from {session_path}")
-            context = await browser.new_context(
-                storage_state=session_path,
-                viewport={"width": 1920, "height": 1080},
-                device_scale_factor=1.0
-            )
-            page = await context.new_page()
-            await page.goto(site_url, wait_until="domcontentloaded", timeout=20000)
-            print(f"✅ Logged in automatically to {site_url}")
-            return browser, page
-
-        # If no session found, go to login page and wait for manual login
-        print(f"🔐 No session found. Opening {login_url or site_url} for manual login...")
-        context = await browser.new_context(viewport={"width": 1920, "height": 1080}, device_scale_factor=1.0)
+    # If we already have a session, reuse it
+    if os.path.exists(session_path):
+        print(f"Reusing existing session from {session_path}")
+        context = await browser.new_context(
+            storage_state=session_path,
+            viewport={"width": 1920, "height": 1080},
+            device_scale_factor=1.0
+        )
         page = await context.new_page()
         
-        await page.goto(login_url or site_url, wait_until="domcontentloaded", timeout=20000)
+        print("Logged in automatically")
+        return browser, context
 
-        wait_time = 30000
+    # If no session found, go to login page and wait 1 minute for manual login
+    print(f"No session found. Opening {login_url} for manual login...")
+    if not login_url:
+        raise ValueError("You need to first login to the website before starting the task.")
+    context = await browser.new_context(viewport={"width": 1920, "height": 1080}, device_scale_factor=1.0)
+    page = await context.new_page()
 
-        print(f"⏳ Please log in manually within {wait_time / 1000} seconds...")
-        await page.wait_for_timeout(wait_time)
+    await page.goto(login_url, wait_until="domcontentloaded", timeout=20000)
 
-        await context.storage_state(path=session_path)
-        print(f"✅ Session saved to {session_path}")
+    wait_time = 60000 # 1 minute for manual login
 
-        await page.goto(site_url, wait_until="domcontentloaded", timeout=20000)
-        print(f"✅ Ready at {site_url}")
+    print(f"Please log in manually within {wait_time / 1000} seconds...")
+    await page.wait_for_timeout(wait_time)
 
-        return browser, page
+    await context.storage_state(path=session_path)
+    print(f"Session saved to {session_path}")
+
+    return browser, context
