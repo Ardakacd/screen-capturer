@@ -20,7 +20,7 @@ export default function WorkflowCapture({
 }: WorkflowCaptureProps) {
   const [task, setTask] = useState("");
   const [loginUrl, setLoginUrl] = useState("");
-  const [sessionPath, setSessionPath] = useState("session.json");
+  const [sessionPath, setSessionPath] = useState("");
   const [error, setError] = useState("");
   const [showLoginModal, setShowLoginModal] = useState(false);
 
