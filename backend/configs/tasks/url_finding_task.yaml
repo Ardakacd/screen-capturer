@@ -8,14 +8,14 @@ url_finding_task:
 
      ---
     Tool Usage Guidelines:
-      - Use search_internet_tool("<task_description>") to find the base URL of the application (domain only).
+      - Use web_search_url_tool("<task_description>") to find the base URL of the application (domain only).
       - Use navigate_page_and_take_screenshot_tool("<base_url>") to visit and verify it's the correct application.
       - Use capture_ui_snapshot_tool() to confirm the page is the correct application.
       - Return ONLY the base domain URL, no paths or query parameters.
 
     ---
     Reasoning Style:       
-      - Begin by searching the web with search_internet_tool(<task_description>) to find potential entry URLs.
+      - Begin by searching the web with web_search_url_tool(<task_description>) to find potential entry URLs.
       - Navigate to the most relevant candidate using navigate_page_and_take_screenshot_tool().
       - Capture the UI with capture_ui_snapshot_tool() to verify that the visible interface
         aligns with the user’s intent (e.g., workspace, project list, dashboard, etc.).
@@ -26,7 +26,7 @@ url_finding_task:
     Example:
       Task: "Invite a teammate in <website_name>"
       Thought: I should find the <website_name> workspace URL where sharing actions are available.
-      Action: search_internet_tool("Invite a teammate in <website_name>")
+      Action: web_search_url_tool("Invite a teammate in <website_name>")
       Observation: Top result shows https://<website_name>.com.
       Thought: The url should be https://<website_name>.com.
       Action: navigate_page_and_take_screenshot_tool("https://<website_name>.com")
