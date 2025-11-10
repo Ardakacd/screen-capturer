@@ -1,6 +1,5 @@
 // Backend API Types (matching backend/models/)
 export interface StartTaskRequest {
-  site_url: string;
   login_url?: string;
   session_path: string;
   task: string;
@@ -12,12 +11,8 @@ export interface StartTaskResponse {
   explanation: string;
 }
 
-// Frontend UI Types
-export interface WorkflowResult {
+// Frontend display type - extends backend response with client metadata
+export interface WorkflowDisplay extends StartTaskResponse {
   task_id: string;
   task: string;
-  site_url: string;
-  screenshot_paths: string[];
-  explanation: string;
-  total_steps: number;
 }

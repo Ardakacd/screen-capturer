@@ -1,9 +1,9 @@
 "use client";
 
-import { WorkflowResult } from "@/types";
+import { WorkflowDisplay } from "@/types";
 
 interface WorkflowViewerProps {
-  workflow: WorkflowResult;
+  workflow: WorkflowDisplay;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -59,23 +59,7 @@ export default function WorkflowViewer({ workflow }: WorkflowViewerProps) {
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
-            <span>{workflow.total_steps} steps</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-              />
-            </svg>
-            <span className="truncate max-w-xs">{workflow.site_url}</span>
+            <span>{workflow.paths.length} visual steps</span>
           </div>
         </div>
       </div>
@@ -119,10 +103,10 @@ export default function WorkflowViewer({ workflow }: WorkflowViewerProps) {
           Visual Steps
         </h3>
         <div className="space-y-6">
-          {workflow.screenshot_paths.map((screenshotPath, index) => (
+          {workflow.paths.map((screenshotPath, index) => (
             <div key={index} className="relative">
               {/* Timeline connector */}
-              {index < workflow.screenshot_paths.length - 1 && (
+              {index < workflow.paths.length - 1 && (
                 <div className="absolute left-6 top-16 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 to-transparent dark:from-blue-800" />
               )}
 

@@ -3,12 +3,11 @@
 import { useState } from "react";
 import WorkflowCapture from "@/components/WorkflowCapture";
 import WorkflowViewer from "@/components/WorkflowViewer";
-import { WorkflowResult } from "@/types";
+import { WorkflowDisplay } from "@/types";
 
 export default function Home() {
-  const [currentWorkflow, setCurrentWorkflow] = useState<WorkflowResult | null>(
-    null
-  );
+  const [currentWorkflow, setCurrentWorkflow] =
+    useState<WorkflowDisplay | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
 
   return (
@@ -52,6 +51,7 @@ export default function Home() {
                 setIsCapturing(false);
               }}
               onCapturingChange={setIsCapturing}
+              isCapturing={isCapturing}
             />
           </div>
 
