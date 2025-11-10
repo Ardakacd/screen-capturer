@@ -24,4 +24,5 @@ async def start_task(request: StartTaskRequest, task_service: TaskService = Depe
     try:
         return await task_service.start_task(request)
     except Exception as e:
+        print(f"Task execution failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Task execution failed: {str(e)}")
