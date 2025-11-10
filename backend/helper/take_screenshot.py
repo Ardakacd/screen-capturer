@@ -8,10 +8,17 @@ async def take_screenshot(page: Page, id_number: str, tag: str = "step", bbox_x:
                             bbox_width: float = None, bbox_height: float = None):
         """Capture a screenshot and optionally highlight a bounding box."""
         
+
+        # Store the screenshot in the screenshots directory
         os.makedirs(f"screenshots/{id_number}", exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         raw_path = f"screenshots/{id_number}/{tag}_{timestamp}_raw.png"
         final_path = f"screenshots/{id_number}/{tag}_{timestamp}.png"
+
+        # Wait for the page to load
+        await page.wait_for_load_state("domcontentloaded")
+        # Additional wait for dynamic content to settle
+        await page.wait_for_timeout(600)
 
         # Capture screenshot
         await page.screenshot(
