@@ -1,89 +1,104 @@
-import nest_asyncio
-import yaml
-from crewai import Agent, LLM
-from create_tools import create_tools
-from datetime import datetime
 import json
-import os
+from crewai import Crew
 from session import ensure_session
 from models.start_task import StartTaskRequest, StartTaskResponse
-from models.agent_config import AgentConfig
 from helper.take_screenshot import take_screenshot
-
-nest_asyncio.apply()  
+from helper.page_helper import get_current_page
+from create_tools import create_tools
+from agents.workflow_executor_agent import WorkflowExecutorAgent
+from agents.url_finder_agent import URLFinderAgent
+from tasks.workflow_execution_task import WorkflowExecutionTask
+from tasks.url_finding_task import URLFindingTask
 
 class TaskService:
+
     async def start_task(self, start_task_request: StartTaskRequest) -> StartTaskResponse:
         """
-        Start a new task
+        Start a new task by coordinating browser session, tools, crew, and execution.
         """
-        
-        with open("configs/planner_agent.yaml", "r") as f:
-            yaml_data = yaml.safe_load(f)
-            config = AgentConfig(**yaml_data["planner_agent"])
-
-        browser, page = await ensure_session(
-            site_url=start_task_request.site_url,
+        # Setup browser session
+        browser, context = await ensure_session(
             login_url=start_task_request.login_url,
             session_path=start_task_request.session_path
         )
 
-
         id_number = start_task_request.task_id
 
-        # Create tools (passing Playwright page)
-        tools = create_tools(page, id_number)
-
-        full_backstory = self._generate_full_backstory(config)
+        # Create all available tools
+        all_tools = create_tools(context, id_number)
         
-        # Initialize CrewAI agent with specific LLM
-        planner = Agent(
-            role=config.role,
-            goal=config.goal,
-            backstory=full_backstory,
-            verbose=config.verbose,
-            allow_delegation=config.allow_delegation,
-            tools=tools,
-            llm=LLM(
-        model=config.llm), 
+        # Separate tools for different tasks
+        url_finder_tools = [tool for tool in all_tools if tool.name in ["web_search_url_tool", "navigate_page_and_take_screenshot_tool", "capture_ui_snapshot_tool"]]
+        executor_tools = [tool for tool in all_tools if tool.name != "web_search_url_tool"]
+        
+        
+        url_finder_agent = URLFinderAgent().get_agent()
+        workflow_executor_agent = WorkflowExecutorAgent().get_agent()
+        
+        # Create tasks (with tools)
+        url_finding_task = URLFindingTask(
+            agent=url_finder_agent,
+            tools=url_finder_tools
+        ).get_task()
+        
+        workflow_execution_task = WorkflowExecutionTask(
+            agent=workflow_executor_agent,
+            tools=executor_tools,
+            url_finding_task=url_finding_task,
+        ).get_task()
+        
+        # Create crew with agents and tasks
+        crew = Crew(
+            agents=[url_finder_agent, workflow_executor_agent],
+            tasks=[url_finding_task, workflow_execution_task],
+            verbose=True,
+            cache=False,   # Disable tool result caching otherwise it does not work with the snapshot tool
         )
-
-        result = await planner.kickoff_async(start_task_request.task)
+        
+        result = await crew.kickoff_async(inputs={"task_description": start_task_request.task})
 
         print("\n=== FINAL RESULT ===")
+        print(result)
         
-        parsed = json.loads(result.raw)
-        paths = parsed.get("paths", [])
-        explanation = parsed.get("explanation", "")
-
-        final_screenshot_path = await take_screenshot(page, id_number, tag="final_state")
-
-        paths.append(final_screenshot_path)
-
-        final_result = StartTaskResponse(
-            paths=paths,
-            explanation=explanation
-        )
-
-        print(final_result.model_dump_json())
+        # Finalize workflow result with final screenshot
+        final_result = await self._finalize_workflow_result(result, context, id_number)
 
         await browser.close()
 
         return final_result
 
-    def _generate_full_backstory(self, config: AgentConfig) -> str:
-        full_backstory = (
-            config.backstory
-            + "\n\n---\n\nTool Usage Guidelines:\n"
-            + config.tool_usage_guidelines
-            + "\n\n---\n\nReasoning Style:\n"
-            + config.reasoning_style
-            + "\n\n---\n\nOutput Format Guidelines:\n"
-            + config.output_format_guidelines
-            + "\n\n---\n\nFew-Shot Examples:\n"
-            + config.examples_few_shot
+    async def _finalize_workflow_result(
+        self, 
+        result, 
+        context, 
+        id_number: str
+    ) -> StartTaskResponse:
+        """
+        Finalize the workflow result by parsing output and capturing final screenshot.
+        
+        Args:
+            result: The CrewAI task result
+            context: Browser context for taking final screenshot
+            id_number: Task identifier for screenshot naming
+            
+        Returns:
+            StartTaskResponse with paths and explanation
+        """
+        
+        parsed = result.pydantic.model_dump() if hasattr(result, 'pydantic') else json.loads(result.raw)
+        paths = parsed.get("paths", [])
+        explanation = parsed.get("explanation", "")
+
+        current_page = await get_current_page(context)
+        final_screenshot_path = await take_screenshot(current_page, id_number, tag="final_state")
+
+        paths.append(final_screenshot_path)
+
+        return StartTaskResponse(
+            paths=paths,
+            explanation=explanation
         )
-        return full_backstory
+    
 
 
 def get_task_service() -> TaskService:
